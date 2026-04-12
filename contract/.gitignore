@@ -1,6 +1,23 @@
-# Dependencies
-node_modules/
+node_modules
+temp
+build
+dist
+.DS_Store
+package.ts
 
-# Build artifacts
-build/
-temp/
+# VS Code
+.vscode/*
+.history/
+*.vsix
+
+# IDEA files
+.idea
+
+# VIM
+Session.vim
+.vim/
+
+# Other private editor folders
+.nvim/
+.emacs/
+.helix/
