@@ -10,7 +10,7 @@ export default function ProfilePage() {
   const walletAddress = useTonAddress()
   const lp = useLaunchParams()
 
-  const user = lp.tgWebAppData?.user
+  const user = lp.tgWebAppData?.user as { username?: string; firstName?: string } | undefined
   const initData = lp.tgWebAppData ?? ''
 
   const [avatar, setAvatar] = useState<string | null>(null)
