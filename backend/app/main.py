@@ -1,4 +1,5 @@
 import asyncio
+import threading
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.core.database import init_db
@@ -7,10 +8,17 @@ from app.api.notify import router as notify_router
 from app.bot.bot import start_bot
 
 
+def run_bot_in_thread():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(start_bot())
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    asyncio.create_task(start_bot())
+    thread = threading.Thread(target=run_bot_in_thread, daemon=True)
+    thread.start()
     yield
 
 
