@@ -97,8 +97,18 @@ async def cmd_claim(message: Message):
         await message.answer("⏳ Аукцион ещё не завершён или победитель не определён.")
         return
 
-    # Сравниваем адреса (приводим к нижнему регистру для надёжности)
-    if wallet_address.lower() != winner_address.lower():
+    # Нормализуем оба адреса к raw формату для сравнения
+    try:
+        from pytoniq_core import Address as TonAddress
+        def normalize(addr: str) -> str:
+            return TonAddress(addr).to_str(is_user_friendly=False).lower()
+        wallet_norm = normalize(wallet_address)
+        winner_norm = normalize(winner_address)
+    except Exception:
+        wallet_norm = wallet_address.lower()
+        winner_norm = winner_address.lower()
+
+    if wallet_norm != winner_norm:
         await message.answer("❌ Твой кошелёк не является победителем этого аукциона.")
         return
 

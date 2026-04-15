@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTonConnectUI, useTonAddress } from '@tonconnect/ui-react'
-import { useLaunchParams } from '@telegram-apps/sdk-react'
+import { useLaunchParams, useRawInitData } from '@telegram-apps/sdk-react'
 import { backend } from '../api/backend'
 
 export default function ProfilePage() {
@@ -9,28 +9,28 @@ export default function ProfilePage() {
   const [tonConnectUI] = useTonConnectUI()
   const walletAddress = useTonAddress()
   const lp = useLaunchParams()
+  const rawInitData = useRawInitData() ?? ''
 
   const user = lp.tgWebAppData?.user as { username?: string; firstName?: string } | undefined
-  const initData = lp.tgWebAppData ?? ''
 
   const [avatar, setAvatar] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
   // Получаем аватарку с backend
   useEffect(() => {
-    if (!initData) return
-    backend.getProfile(String(initData))
+    if (!rawInitData) return
+    backend.getProfile(rawInitData)
       .then(p => setAvatar(p.avatar_url))
       .catch(() => {})
-  }, [initData])
+  }, [rawInitData])
 
   // Сохраняем связку wallet↔telegram при подключении кошелька
   useEffect(() => {
-    if (!walletAddress || !initData || saved) return
-    backend.connectWallet(walletAddress, user?.username ?? null, avatar, String(initData))
+    if (!walletAddress || !rawInitData || saved) return
+    backend.connectWallet(walletAddress, user?.username ?? null, avatar, rawInitData)
       .then(() => setSaved(true))
       .catch(console.error)
-  }, [walletAddress, initData, saved])
+  }, [walletAddress, rawInitData, saved])
 
   return (
     <div className="page">
