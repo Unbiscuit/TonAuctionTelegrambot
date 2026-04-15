@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTonConnectUI, useTonAddress } from '@tonconnect/ui-react'
-import { toNano } from '@ton/core'
+import { toNano, beginCell } from '@ton/core'
 import { useAuction } from '../hooks/useAuction'
 import { Timer } from '../components/Timer'
 import { LeaderCard } from '../components/LeaderCard'
@@ -36,12 +36,14 @@ export default function AuctionPage() {
     try {
       const prevBidder = state.highestBid > 0n ? state.highestBidder.toString() : null
 
+      const payload = beginCell().storeUint(0x42, 32).endCell().toBoc().toString('base64')
+
       await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 300,
         messages: [{
           address: import.meta.env.VITE_CONTRACT_ADDRESS,
           amount: bidNano.toString(),
-          payload: 'te6cckEBAQEABgAACEAAAABCn0HRQA==', // PlaceBid opcode 0x42
+          payload,
         }],
       })
 
