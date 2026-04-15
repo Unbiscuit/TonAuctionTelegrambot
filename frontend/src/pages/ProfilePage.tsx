@@ -15,6 +15,7 @@ export default function ProfilePage() {
 
   const [avatar, setAvatar] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   // Получаем аватарку с backend
   useEffect(() => {
@@ -27,9 +28,10 @@ export default function ProfilePage() {
   // Сохраняем связку wallet↔telegram при подключении кошелька
   useEffect(() => {
     if (!walletAddress || !rawInitData || saved) return
+    setSaveError(null)
     backend.connectWallet(walletAddress, user?.username ?? null, avatar, rawInitData)
       .then(() => setSaved(true))
-      .catch(console.error)
+      .catch((e: Error) => setSaveError(e.message))
   }, [walletAddress, rawInitData, saved])
 
   return (
@@ -55,6 +57,9 @@ export default function ProfilePage() {
             <>
               <p className="wallet-address">
                 {walletAddress.slice(0, 8)}...{walletAddress.slice(-6)}
+              </p>
+              <p style={{ fontSize: 12, color: saved ? 'var(--success)' : saveError ? '#ff4444' : 'var(--text-secondary)' }}>
+                {saved ? '✓ Кошелёк привязан' : saveError ? `Ошибка: ${saveError}` : 'Сохранение...'}
               </p>
               <button
                 className="btn btn--secondary"
