@@ -8,4 +8,10 @@ dp.include_router(router)
 
 
 async def start_bot():
-    await dp.start_polling(bot)
+    import asyncio
+    while True:
+        try:
+            await dp.start_polling(bot, handle_signals=False)
+        except Exception as e:
+            print(f"Bot polling error: {e}, restarting in 5s...")
+            await asyncio.sleep(5)
