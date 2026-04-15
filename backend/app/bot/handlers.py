@@ -98,15 +98,9 @@ async def cmd_claim(message: Message):
         return
 
     # Нормализуем оба адреса к raw формату для сравнения
-    try:
-        from pytoniq_core import Address as TonAddress
-        def normalize(addr: str) -> str:
-            return TonAddress(addr).to_str(is_user_friendly=False).lower()
-        wallet_norm = normalize(wallet_address)
-        winner_norm = normalize(winner_address)
-    except Exception:
-        wallet_norm = wallet_address.lower()
-        winner_norm = winner_address.lower()
+    from app.api.users import normalize_address
+    wallet_norm = normalize_address(wallet_address)
+    winner_norm = normalize_address(winner_address)
 
     if wallet_norm != winner_norm:
         await message.answer("❌ Твой кошелёк не является победителем этого аукциона.")

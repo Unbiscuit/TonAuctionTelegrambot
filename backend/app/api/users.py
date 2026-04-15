@@ -3,6 +3,15 @@ from pydantic import BaseModel
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.core.telegram import get_avatar_url
+from pytoniq_core import Address as TonAddress
+
+
+def normalize_address(addr: str) -> str:
+    """Приводит TON-адрес к raw формату 0:hash для единообразного хранения."""
+    try:
+        return TonAddress(addr).to_str(is_user_friendly=False).lower()
+    except Exception:
+        return addr.lower()
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -19,6 +28,7 @@ async def connect_wallet(
     user: dict = Depends(get_current_user),
 ):
     telegram_id = user["id"]
+    normalized = normalize_address(body.wallet_address)
     db = await get_db()
     try:
         await db.execute(
@@ -30,7 +40,7 @@ async def connect_wallet(
                 username    = excluded.username,
                 avatar_url  = excluded.avatar_url
             """,
-            (body.wallet_address, telegram_id, body.username, body.avatar_url),
+            (normalized, telegram_id, body.username, body.avatar_url),
         )
         await db.commit()
     finally:
@@ -41,11 +51,12 @@ async def connect_wallet(
 
 @router.get("/by-wallet")
 async def get_user_by_wallet(wallet: str):
+    normalized = normalize_address(wallet)
     db = await get_db()
     try:
         cursor = await db.execute(
             "SELECT telegram_id, username, avatar_url FROM users WHERE wallet_address = ?",
-            (wallet,),
+            (normalized,),
         )
         row = await cursor.fetchone()
     finally:
