@@ -17,19 +17,17 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  // Получаем аватарку напрямую из Telegram Bot API
-  useEffect(() => {
-    if (!rawInitData) return
-    backend.getAvatar(rawInitData)
-      .then(r => setAvatar(r.avatar_url))
-      .catch(() => {})
-  }, [rawInitData])
-
   // Сохраняем связку wallet↔telegram при подключении кошелька
   useEffect(() => {
     if (!walletAddress || !rawInitData || saved) return
     setSaveError(null)
-    backend.connectWallet(walletAddress, user?.username ?? null, avatar, rawInitData)
+    backend.getAvatar(rawInitData)
+      .then(r => r.avatar_url)
+      .catch(() => null)
+      .then(avatarUrl => {
+        setAvatar(avatarUrl)
+        return backend.connectWallet(walletAddress, user?.username ?? null, avatarUrl, rawInitData)
+      })
       .then(() => setSaved(true))
       .catch((e: Error) => setSaveError(e.message))
   }, [walletAddress, rawInitData, saved])
