@@ -11,13 +11,16 @@ router = Router()
 
 async def get_contract_winner() -> str | None:
     """Вызывает get fun winner() на контракте через toncenter."""
+    import base64
+    from pytoniq_core import Cell
+
     async with httpx.AsyncClient() as client:
-        response = await client.get(
+        response = await client.post(
             "https://testnet.toncenter.com/api/v2/runGetMethod",
-            params={
+            json={
                 "address": settings.contract_address,
                 "method": "winner",
-                "stack": "[]",
+                "stack": [],
             },
         )
         data = response.json()
@@ -26,19 +29,30 @@ async def get_contract_winner() -> str | None:
         return None
 
     stack = data["result"]["stack"]
-    if not stack or stack[0][0] == "null":
+    if not stack:
         return None
 
-    # Адрес возвращается как cell, парсим из него
+    item = stack[0]
+
+    # Null → аукцион не завершён
+    if item[0] == "null":
+        return None
+
+    # Tact возвращает Address? как tuple(slice) когда Some
+    if item[0] == "tuple":
+        inner = item[1]
+        if not inner:
+            return None
+        item = inner[0]
+
+    if item[0] not in ("slice", "cell"):
+        return None
+
     try:
-        cell_data = stack[0][1]
-        # toncenter возвращает адрес как slice с bytes в base64
-        import base64
-        from pytoniq_core import Cell
-        cell_bytes = base64.b64decode(cell_data["bytes"])
+        cell_bytes = base64.b64decode(item[1]["bytes"])
         cell = Cell.one_from_boc(cell_bytes)
         addr = cell.begin_parse().load_address()
-        return str(addr)
+        return addr.to_str(is_user_friendly=False)
     except Exception:
         return None
 
@@ -103,7 +117,11 @@ async def cmd_claim(message: Message):
     winner_norm = normalize_address(winner_address)
 
     if wallet_norm != winner_norm:
-        await message.answer("❌ Твой кошелёк не является победителем этого аукциона.")
+        await message.answer(
+            f"❌ Твой кошелёк не является победителем.\n\n"
+            f"Твой: `{wallet_norm}`\n"
+            f"Победитель: `{winner_norm}`"
+        )
         return
 
     # Проверяем не отправляли ли уже инвайт
@@ -142,11 +160,7 @@ async def cmd_claim(message: Message):
     try:
         import time
         await db.execute(
-            """
-            INSERT INTO winners (wallet_address, invite_sent, finalized_at)
-            VALUES (?, 1, ?)
-            ON CONFLICT(wallet_address) DO UPDATE SET invite_sent = 1
-            """,
+            "INSERT INTO winners (wallet_address, invite_sent, finalized_at) VALUES (?, 1, ?)",
             (wallet_address, int(time.time())),
         )
         await db.commit()
