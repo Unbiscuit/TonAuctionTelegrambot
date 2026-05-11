@@ -17,11 +17,11 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  // Получаем аватарку с backend
+  // Получаем аватарку напрямую из Telegram Bot API
   useEffect(() => {
     if (!rawInitData) return
-    backend.getProfile(rawInitData)
-      .then(p => setAvatar(p.avatar_url))
+    backend.getAvatar(rawInitData)
+      .then(r => setAvatar(r.avatar_url))
       .catch(() => {})
   }, [rawInitData])
 

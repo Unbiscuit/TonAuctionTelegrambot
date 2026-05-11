@@ -20,6 +20,9 @@ export const backend = {
   getProfile: (initData: string) =>
     request<{ wallet_address: string; username: string; avatar_url: string }>('/api/users/me', {}, initData),
 
+  getAvatar: (initData: string) =>
+    request<{ avatar_url: string | null }>('/api/users/avatar', {}, initData),
+
   getUserByWallet: (wallet: string) =>
     request<{ telegram_id: number; username: string; avatar_url: string }>(
       `/api/users/by-wallet?wallet=${encodeURIComponent(wallet)}`
