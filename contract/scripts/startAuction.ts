@@ -14,7 +14,7 @@ export async function run(provider: NetworkProvider) {
         {
             $$type: 'StartAuction',
             minBid: toNano('0.5'),  // минимальная ставка 0.5 TON
-            duration: 3600n,        // 1 час
+            duration: 600n,         // 10 минут
         }
     );
 

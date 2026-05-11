@@ -23,12 +23,17 @@ export default function AuctionPage() {
     if (!bidInput || !state) return
     const bidNano = toNano(bidInput)
 
-    if (bidNano <= state.highestBid) {
-      alert(`Ставка должна быть выше ${(Number(state.highestBid) / 1e9).toFixed(2)} TON`)
-      return
-    }
-    if (bidNano < state.minBid) {
-      alert(`Минимальная ставка: ${(Number(state.minBid) / 1e9).toFixed(2)} TON`)
+    const minIncrement = toNano('0.1')
+    const minRequired = state.highestBid > 0n
+      ? state.highestBid + minIncrement
+      : state.minBid
+
+    if (bidNano < minRequired) {
+      if (state.highestBid > 0n) {
+        alert(`Минимальная ставка: ${(Number(minRequired) / 1e9).toFixed(2)} TON (подъём не менее 0.1 TON)`)
+      } else {
+        alert(`Минимальная ставка: ${(Number(state.minBid) / 1e9).toFixed(2)} TON`)
+      }
       return
     }
 
@@ -64,7 +69,11 @@ export default function AuctionPage() {
   if (loading) return <div className="page page--center">Загрузка...</div>
   if (error) return <div className="page page--center">{error}</div>
 
-  const minBidTon = state ? (Number(state.minBid) / 1e9).toFixed(2) : '0'
+  const minBidTon = state
+    ? state.highestBid > 0n
+      ? ((Number(state.highestBid) + 1e8) / 1e9).toFixed(2)
+      : (Number(state.minBid) / 1e9).toFixed(2)
+    : '0'
 
   return (
     <div className="page">
